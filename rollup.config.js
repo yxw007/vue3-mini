@@ -7,12 +7,15 @@
 */
 
 const path = require('path');
+const json = require("@rollup/plugin-json");
+const resolvePlugin = require("@rollup/plugin-node-resolve");
+const ts = require('rollup-plugin-typescript2');
 
 let moduleName = process.env.Target;
 console.log(`rollup: current build ${moduleName}...`);
 
 let packagesDir = path.resolve(__dirname, "packages");
-let resolve = (p) => path.resolve(packagesDir, moduleName);
+let resolve = (p) => path.resolve(packagesDir, moduleName, p);
 let packageJson = require(resolve("package.json"));
 
 const outputConfig = {
@@ -31,6 +34,7 @@ const outputConfig = {
 }
 
 const buildOptions = packageJson.buildOptions;
+
 function createConfig(format, output) {
     output.name = buildOptions.name;
     output.sourcemap = true;
@@ -38,9 +42,14 @@ function createConfig(format, output) {
     return {
         input: resolve('src/index.ts'),
         output,
-        
+        plugins: [
+            json(),
+            ts({
+                tsconfig: path.resolve(__dirname, 'tsconfig.json')
+            }),
+            resolvePlugin.nodeResolve()
+        ]
     }
 }
 
-
-buildOptions.formats.map(format => createConfig(format, outputConfig[format]));
+export default buildOptions.formats.map(format => createConfig(format, outputConfig[format]));
